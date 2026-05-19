@@ -94,10 +94,12 @@ const css = `
   }
 
   /* ── scroll reveal ── */
-  .reveal       { opacity:0; transform:translateY(28px); transition:opacity .65s ease, transform .65s ease; }
-  .reveal-left  { opacity:0; transform:translateX(-32px); transition:opacity .65s ease, transform .65s ease; }
-  .reveal-right { opacity:0; transform:translateX(32px);  transition:opacity .65s ease, transform .65s ease; }
+  .reveal       { opacity:0; transform:translateY(28px); transition:opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1); }
+  .reveal-left  { opacity:0; transform:translateX(-32px); transition:opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1); }
+  .reveal-right { opacity:0; transform:translateX(32px);  transition:opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1); }
   .reveal.visible, .reveal-left.visible, .reveal-right.visible { opacity:1; transform:none; }
+  .reveal-scale { opacity:0; transform:scale(.96); transition:opacity .65s cubic-bezier(.16,1,.3,1), transform .65s cubic-bezier(.16,1,.3,1); }
+  .reveal-scale.visible { opacity:1; transform:scale(1); }
 
   /* ── gradient text ── */
   .g-text {
@@ -202,6 +204,7 @@ const css = `
     transition:transform .2s,box-shadow .2s,opacity .2s;
   }
   .btn-primary:hover { transform:translateY(-2px);box-shadow:0 8px 28px rgba(124,58,237,.45);opacity:.9; }
+  .btn-primary:active { transform:translateY(0) scale(.97); }
   .btn-ghost {
     background:transparent;color:var(--muted);
     padding:.75rem 1.6rem;border-radius:999px;font-size:.9rem;
@@ -210,6 +213,7 @@ const css = `
     transition:color .2s,border-color .2s,transform .2s;
   }
   .btn-ghost:hover { color:var(--text);border-color:rgba(255,255,255,.22);transform:translateY(-2px); }
+  .btn-ghost:active { transform:translateY(0) scale(.97); }
 
   /* ── Dot sphere ── */
   .sphere-wrap {
@@ -254,7 +258,7 @@ const css = `
   }
 
   /* ══════ SECTION COMMONS ══════ */
-  .section { padding:6rem 2.5rem; }
+  .section { padding:clamp(4.5rem,8vw,6.5rem) clamp(1.25rem,4vw,2.5rem); position:relative; }
   .section-inner { max-width:1100px;margin:0 auto; }
   .section-tag {
     font-size:.72rem;font-weight:700;color:var(--purple-lt);
@@ -265,65 +269,207 @@ const css = `
     font-size:clamp(1.75rem,3.5vw,2.5rem);font-weight:800;
     letter-spacing:-.04em;color:var(--text);line-height:1.18;margin-bottom:1rem;
   }
-  .section-sub { font-size:.95rem;color:var(--muted);max-width:500px;line-height:1.75; }
-  .section-header { margin-bottom:3.5rem; }
-  .services-bg { background:linear-gradient(180deg,var(--bg) 0%,var(--surface) 50%,var(--bg) 100%); }
+  .section-sub { font-size:clamp(.9rem,1.8vw,.98rem);color:var(--muted);max-width:520px;line-height:1.75; }
+  .section-header { margin-bottom:clamp(2.5rem,5vw,3.5rem); }
+  .section-header--center { text-align:center; }
+  .section-header--center .section-tag { justify-content:center; }
+  .section-header--center .section-sub { margin-left:auto;margin-right:auto; }
+  .services-bg {
+    background:linear-gradient(180deg,var(--bg) 0%,var(--surface) 48%,var(--bg) 100%);
+  }
+  .services-bg::before {
+    content:'';position:absolute;inset:0;pointer-events:none;
+    background-image:radial-gradient(rgba(124,58,237,.06) 1px,transparent 1px);
+    background-size:28px 28px;
+    mask-image:linear-gradient(to bottom,transparent,black 15%,black 85%,transparent);
+  }
+  .section-divider {
+    height:1px;max-width:1100px;margin:0 auto;
+    background:linear-gradient(90deg,transparent,rgba(124,58,237,.35) 50%,transparent);
+    opacity:.6;
+  }
 
-  /* ══════ SERVICES ══════ */
-  .services-grid {
-    display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
-    gap:1rem;align-items:stretch;
+  /* ══════ SERVICES — compact + UI preview ══════ */
+  .services-compact {
+    display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;
   }
-  .service-card {
-    background:var(--card);border:.5px solid var(--border-p);border-radius:16px;
-    padding:1.6rem;display:flex;flex-direction:column;gap:.4rem;
-    transition:transform .3s,border-color .3s,box-shadow .3s;cursor:default;
+  .svc-compact {
+    border-radius:14px;overflow:hidden;
+    border:.5px solid var(--border);
+    background:var(--card);
+    transition:border-color .3s,transform .3s cubic-bezier(.16,1,.3,1),box-shadow .3s;
   }
-  .service-card:hover { transform:translateY(-7px);border-color:rgba(124,58,237,.55);box-shadow:0 14px 38px rgba(124,58,237,.1); }
-  .svc-icon { width:44px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;margin-bottom:.65rem; }
-  .icon-p { background:rgba(124,58,237,.13);color:var(--purple-lt); }
-  .icon-c { background:rgba(6,182,212,.1);color:var(--cyan); }
-  .svc-title { font-size:.95rem;font-weight:700;color:var(--text); }
-  .svc-desc  { font-size:.85rem;color:var(--muted);line-height:1.65; }
-
-  /* ══════ PROCESS — animated timeline ══════ */
-  .process-wrap { position:relative; }
-  .process-center-line {
-    position:absolute;left:50%;top:0;bottom:0;width:1px;
-    background:linear-gradient(to bottom,transparent,rgba(124,58,237,.5) 10%,rgba(124,58,237,.5) 90%,transparent);
-    transform-origin:top;transform:scaleY(0);
-    transition:transform 1.4s cubic-bezier(.16,1,.3,1);
+  .svc-compact:hover {
+    border-color:var(--border-p);
+    transform:translateY(-3px);
+    box-shadow:0 12px 32px rgba(124,58,237,.1);
   }
-  .process-center-line.drawn { transform:scaleY(1); }
-  .process-step {
-    display:grid;grid-template-columns:1fr 64px 1fr;
-    gap:1.5rem;align-items:center;margin-bottom:3.5rem;position:relative;
+  .svc-compact-visual {
+    height:72px;position:relative;overflow:hidden;
+    border-bottom:.5px solid rgba(255,255,255,.05);
   }
-  .process-step:last-child { margin-bottom:0; }
-  .step-left  { text-align:right; }
-  .step-right { text-align:left; }
-  .step-circle-wrap { display:flex;align-items:center;justify-content:center;position:relative;z-index:2; }
-  .step-circle {
-    width:48px;height:48px;border-radius:50%;
-    background:var(--surface);border:1.5px solid rgba(124,58,237,.4);
+  .svc-compact-visual::before {
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(135deg,rgba(124,58,237,.18),rgba(6,182,212,.08));
+  }
+  .svc-preview {
+    position:absolute;inset:12px 14px;
+    border-radius:8px;border:.5px solid rgba(255,255,255,.1);
+    background:rgba(8,8,16,.75);
+    overflow:hidden;
+  }
+  .svc-preview--flow { display:flex;align-items:center;justify-content:center;gap:6px; }
+  .svc-preview--flow span {
+    width:8px;height:8px;border-radius:50%;background:var(--purple-lt);opacity:.7;
+  }
+  .svc-preview--flow span:nth-child(2) { width:20px;height:3px;border-radius:2px;opacity:.4; }
+  .svc-preview--wave { display:flex;align-items:flex-end;justify-content:center;gap:3px;height:100%;padding-bottom:8px; }
+  .svc-preview--wave i {
+    display:block;width:3px;border-radius:2px;background:var(--cyan);
+    animation:waveBar 1.2s ease-in-out infinite;
+  }
+  .svc-preview--wave i:nth-child(1){height:10px;animation-delay:0s}
+  .svc-preview--wave i:nth-child(2){height:18px;animation-delay:.15s}
+  .svc-preview--wave i:nth-child(3){height:14px;animation-delay:.3s}
+  .svc-preview--wave i:nth-child(4){height:22px;animation-delay:.45s}
+  .svc-preview--wave i:nth-child(5){height:12px;animation-delay:.6s}
+  @keyframes waveBar {
+    0%,100%{transform:scaleY(.6)} 50%{transform:scaleY(1)}
+  }
+  .svc-preview--chart { display:flex;align-items:flex-end;gap:4px;padding:10px 12px;height:100%; }
+  .svc-preview--chart i {
+    flex:1;border-radius:2px 2px 0 0;background:linear-gradient(to top,var(--purple),var(--purple-lt));
+    opacity:.75;
+  }
+  .svc-preview--chart i:nth-child(1){height:35%}.svc-preview--chart i:nth-child(2){height:65%}
+  .svc-preview--chart i:nth-child(3){height:45%}.svc-preview--chart i:nth-child(4){height:80%}
+  .svc-preview--nodes { display:flex;align-items:center;justify-content:center;gap:8px;height:100%; }
+  .svc-preview--nodes em {
+    width:22px;height:22px;border-radius:6px;border:.5px solid rgba(6,182,212,.4);
+    background:rgba(6,182,212,.1);
+  }
+  .svc-preview--nodes em:nth-child(2){width:4px;height:4px;border-radius:50%;border:none;background:var(--cyan);opacity:.5}
+  .svc-preview--grid { display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:12px;height:100%; }
+  .svc-preview--grid em { border-radius:3px;background:rgba(167,139,250,.25);min-height:8px; }
+  .svc-preview--window { padding:8px 10px;height:100%; }
+  .svc-preview--window::before {
+    content:'';display:block;height:6px;width:28px;border-radius:3px;
+    background:rgba(255,255,255,.12);margin-bottom:6px;
+  }
+  .svc-preview--window::after {
+    content:'';display:block;height:calc(100% - 14px);border-radius:4px;
+    background:linear-gradient(90deg,rgba(6,182,212,.15),rgba(124,58,237,.15));
+  }
+  .svc-compact-body { padding:.9rem 1rem 1rem; }
+  .svc-compact-head {
+    display:flex;align-items:center;gap:.55rem;margin-bottom:.4rem;
+  }
+  .svc-compact-icon {
+    width:28px;height:28px;border-radius:8px;flex-shrink:0;
     display:flex;align-items:center;justify-content:center;
-    font-size:.78rem;font-weight:700;color:var(--purple-lt);
-    transition:border-color .4s,box-shadow .4s,background .4s;
   }
-  .step-circle.active { border-color:var(--purple-lt);background:rgba(124,58,237,.12);animation:nodePulse 2.5s ease infinite; }
-  .step-card {
-    background:var(--card);border:.5px solid var(--border);
-    border-radius:14px;padding:1.4rem 1.5rem;
-    transition:border-color .3s,box-shadow .3s;
+  .svc-compact-icon.icon-p { background:rgba(124,58,237,.14);color:var(--purple-lt); }
+  .svc-compact-icon.icon-c { background:rgba(6,182,212,.12);color:var(--cyan); }
+  .svc-compact-title { font-size:.88rem;font-weight:700;color:var(--text);letter-spacing:-.02em; }
+  .svc-compact-desc { font-size:.78rem;color:var(--muted);line-height:1.55; }
+  .icon-p { color:var(--purple-lt); }
+  .icon-c { color:var(--cyan); }
+
+  /* ── Slim impact strip (optional, after flow) ── */
+  .impact-strip {
+    display:flex;flex-wrap:wrap;justify-content:center;gap:0;
+    margin-top:1.25rem;padding:.65rem 0;
+    border-top:.5px solid var(--border);
+    border-bottom:.5px solid var(--border);
   }
-  .step-card:hover { border-color:var(--border-p);box-shadow:0 8px 28px rgba(124,58,237,.08); }
-  .step-card-title { font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:.35rem;display:flex;align-items:center;gap:.5rem; }
-  .step-card-desc  { font-size:.85rem;color:var(--muted);line-height:1.65; }
-  .step-chip {
-    display:inline-block;margin-top:.7rem;
-    background:rgba(6,182,212,.08);border:.5px solid rgba(6,182,212,.25);
-    color:var(--cyan);font-size:.72rem;font-weight:600;
-    padding:.22rem .7rem;border-radius:999px;
+  .impact-item {
+    flex:1;min-width:140px;text-align:center;padding:.5rem 1rem;
+    border-right:.5px solid var(--border);
+  }
+  .impact-item:last-child { border-right:none; }
+  .impact-num { font-size:1.1rem;font-weight:800;letter-spacing:-.03em;line-height:1.2; }
+  .impact-label { font-size:.68rem;color:var(--muted);margin-top:.15rem;line-height:1.3; }
+
+  /* ══════ PROCESS — horizontal rail ══════ */
+  .process-section {
+    background:var(--bg);
+    overflow:hidden;
+  }
+  .process-section::before {
+    content:'';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:min(900px,90vw);height:400px;
+    background:radial-gradient(ellipse,rgba(124,58,237,.08),transparent 70%);
+    pointer-events:none;
+  }
+  .process-rail {
+    display:grid;grid-template-columns:repeat(4,1fr);
+    gap:1.25rem;position:relative;padding-top:3.5rem;
+  }
+  .process-rail-track {
+    position:absolute;top:1.35rem;left:12.5%;right:12.5%;height:2px;
+    background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;
+  }
+  .process-rail-fill {
+    height:100%;width:0%;
+    background:linear-gradient(90deg,var(--purple),var(--cyan));
+    border-radius:2px;
+    transition:width 1.2s cubic-bezier(.16,1,.3,1);
+    box-shadow:0 0 12px rgba(124,58,237,.5);
+  }
+  .process-rail-fill.drawn { width:100%; }
+  .process-col {
+    display:flex;flex-direction:column;align-items:center;
+    text-align:center;position:relative;
+  }
+  .process-marker {
+    width:44px;height:44px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:.75rem;font-weight:800;letter-spacing:-.02em;
+    background:var(--surface);
+    border:2px solid rgba(124,58,237,.25);
+    color:var(--muted);margin-bottom:1.25rem;
+    position:relative;z-index:2;
+    transition:all .45s cubic-bezier(.16,1,.3,1);
+  }
+  .process-col.is-active .process-marker,
+  .process-col:hover .process-marker {
+    border-color:var(--purple-lt);
+    background:rgba(124,58,237,.18);
+    color:var(--purple-lt);
+    transform:scale(1.1);
+    box-shadow:0 0 24px rgba(124,58,237,.35);
+  }
+  .process-glass {
+    width:100%;text-align:left;
+    background:rgba(255,255,255,.03);
+    backdrop-filter:blur(12px);
+    border:.5px solid rgba(255,255,255,.08);
+    border-radius:16px;padding:1.35rem 1.25rem;
+    transition:border-color .35s,transform .35s cubic-bezier(.16,1,.3,1),box-shadow .35s;
+  }
+  .process-col:hover .process-glass {
+    border-color:rgba(124,58,237,.3);
+    transform:translateY(-4px);
+    box-shadow:0 16px 40px rgba(0,0,0,.25);
+  }
+  .process-glass-head {
+    display:flex;align-items:center;gap:.5rem;
+    margin-bottom:.5rem;
+  }
+  .process-glass-head svg { flex-shrink:0; }
+  .process-glass-title {
+    font-size:.92rem;font-weight:700;color:var(--text);letter-spacing:-.02em;
+  }
+  .process-glass-desc {
+    font-size:.82rem;color:var(--muted);line-height:1.65;margin-bottom:.75rem;
+  }
+  .process-chip {
+    display:inline-flex;align-items:center;
+    font-size:.68rem;font-weight:600;letter-spacing:.02em;
+    color:var(--cyan);
+    padding:.25rem .65rem;border-radius:999px;
+    background:rgba(6,182,212,.1);
+    border:.5px solid rgba(6,182,212,.22);
   }
 
   /* ══════ WHY — BIG FLOW VISUAL ══════ */
@@ -413,57 +559,75 @@ const css = `
     pointer-events:none;z-index:0;
   }
 
-  /* ── Metrics row below flow ── */
-  .metrics-row {
-    display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;
-  }
-  .metric-card {
-    background:var(--card);border:.5px solid var(--border-p);
-    border-radius:16px;padding:1.4rem;
-    display:flex;flex-direction:column;gap:.4rem;
-    transition:transform .3s,border-color .3s,box-shadow .3s;
-  }
-  .metric-card:hover { transform:translateY(-5px);border-color:rgba(124,58,237,.5);box-shadow:0 10px 28px rgba(124,58,237,.1); }
-  .metric-icon { width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:.4rem; }
-  .metric-num  { font-size:1.8rem;font-weight:800;letter-spacing:-.03em; }
-  .metric-label{ font-size:.8rem;color:var(--muted);line-height:1.4; }
 
-  /* features + tech below metrics */
-  .why-bottom { display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem; }
-  .feat-card {
-    background:var(--card);border:.5px solid var(--border);border-radius:16px;
-    padding:1.4rem;display:flex;flex-direction:column;gap:.75rem;
-    transition:border-color .3s;
+  /* ══════ CTA — split immersive ══════ */
+  .cta-section {
+    padding:clamp(5rem,10vw,7rem) clamp(1.25rem,4vw,2.5rem);
+    position:relative;overflow:hidden;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 50%,rgba(124,58,237,.14),transparent),
+      radial-gradient(ellipse 60% 50% at 85% 60%,rgba(6,182,212,.08),transparent),
+      var(--bg);
   }
-  .feat-card:hover { border-color:var(--border-p); }
-  .feat-item { display:flex;align-items:flex-start;gap:.7rem; }
-  .feat-icon2 { width:30px;height:30px;border-radius:8px;background:rgba(124,58,237,.1);display:flex;align-items:center;justify-content:center;color:var(--purple-lt);flex-shrink:0; }
-  .feat-title2 { font-size:.88rem;font-weight:600;color:var(--text); }
-  .feat-desc2  { font-size:.8rem;color:var(--muted);line-height:1.5; }
-  .tech-card {
-    background:var(--card);border:.5px solid var(--border);border-radius:16px;
-    padding:1.4rem;
+  .cta-mesh {
+    position:absolute;inset:0;pointer-events:none;opacity:.4;
+    background-image:
+      linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);
+    background-size:48px 48px;
+    mask-image:radial-gradient(ellipse 70% 70% at 50% 50%,black,transparent);
   }
-  .tech-chips { display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem; }
-  .tech-chip {
-    background:rgba(255,255,255,.04);border:.5px solid var(--border);
-    color:var(--muted);font-size:.74rem;padding:.24rem .7rem;border-radius:999px;
-    transition:color .2s,border-color .2s,background .2s;cursor:default;
+  .cta-split {
+    max-width:1100px;margin:0 auto;
+    display:grid;grid-template-columns:1.1fr .9fr;
+    gap:clamp(2rem,5vw,4rem);align-items:center;
+    position:relative;z-index:1;
   }
-  .tech-chip.hl { background:rgba(124,58,237,.12);border-color:rgba(124,58,237,.4);color:var(--purple-lt); }
-
-  /* ══════ CTA ══════ */
-  .cta-section { padding:6rem 2.5rem;position:relative;overflow:hidden; }
-  .cta-inner { max-width:680px;margin:0 auto;text-align:center;position:relative;z-index:1; }
-  .cta-card {
-    background:var(--surface);border:.5px solid var(--border-p);border-radius:24px;
-    padding:4rem 3rem;position:relative;overflow:hidden;
+  .cta-copy { text-align:left; }
+  .cta-copy .section-tag { margin-bottom:1rem; }
+  .cta-title {
+    font-size:clamp(2rem,4.5vw,3rem);font-weight:800;
+    letter-spacing:-.045em;color:var(--text);
+    line-height:1.08;margin-bottom:1.25rem;
   }
-  .cta-orb-1 { position:absolute;width:300px;height:300px;border-radius:50%;background:rgba(124,58,237,.2);filter:blur(80px);top:-100px;left:-60px;animation:floatA 10s ease-in-out infinite;pointer-events:none; }
-  .cta-orb-2 { position:absolute;width:200px;height:200px;border-radius:50%;background:rgba(6,182,212,.1);filter:blur(60px);bottom:-60px;right:-40px;animation:floatB 13s ease-in-out infinite;pointer-events:none; }
-  .cta-title { font-size:clamp(1.75rem,3.5vw,2.4rem);font-weight:800;letter-spacing:-.04em;color:var(--text);margin-bottom:1rem;line-height:1.15;position:relative;z-index:1; }
-  .cta-sub { font-size:.95rem;color:var(--muted);margin-bottom:2rem;position:relative;z-index:1;line-height:1.7; }
-  .cta-btns { display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;position:relative;z-index:1; }
+  .cta-sub {
+    font-size:clamp(.92rem,1.8vw,1.02rem);color:var(--muted);
+    line-height:1.75;margin-bottom:2rem;max-width:440px;
+  }
+  .cta-trust-list {
+    display:flex;flex-direction:column;gap:.65rem;
+  }
+  .cta-trust-item {
+    display:flex;align-items:center;gap:.55rem;
+    font-size:.84rem;color:var(--muted);font-weight:500;
+  }
+  .cta-trust-item svg { color:var(--green);flex-shrink:0; }
+  .cta-panel {
+    position:relative;border-radius:24px;padding:2px;
+    background:linear-gradient(145deg,rgba(124,58,237,.6),rgba(6,182,212,.3),rgba(124,58,237,.15));
+    box-shadow:0 32px 80px rgba(124,58,237,.2);
+  }
+  .cta-panel-inner {
+    background:rgba(10,10,20,.92);
+    backdrop-filter:blur(24px);
+    border-radius:22px;padding:2.25rem 2rem;
+    display:flex;flex-direction:column;gap:1.25rem;
+  }
+  .cta-panel-label {
+    font-size:.72rem;font-weight:700;color:var(--purple-lt);
+    letter-spacing:.1em;text-transform:uppercase;
+  }
+  .cta-panel-title {
+    font-size:1.15rem;font-weight:700;color:var(--text);
+    letter-spacing:-.02em;line-height:1.35;
+  }
+  .cta-btns { display:flex;flex-direction:column;gap:.75rem; }
+  .cta-btns .btn-primary,
+  .cta-btns .btn-ghost { justify-content:center;width:100%; }
+  .cta-panel-note {
+    font-size:.75rem;color:var(--muted);text-align:center;
+    padding-top:.5rem;border-top:.5px solid var(--border);
+  }
 
   #creature-wrapper {
     display: flex;
@@ -501,27 +665,68 @@ const css = `
     background: #A78BFA;
   }
   /* ══════ FOOTER ══════ */
-  .footer { padding:2.5rem 2.5rem;border-top:.5px solid var(--border); }
-  .footer-inner { max-width:1100px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem; }
-  .footer-logo { font-size:1.15rem;font-weight:800;color:var(--text);letter-spacing:-.04em; }
+  .footer {
+    padding:3rem clamp(1.25rem,4vw,2.5rem) 2.25rem;
+    border-top:.5px solid var(--border);
+    background:linear-gradient(180deg,var(--bg),#06060e);
+  }
+  .footer-inner {
+    max-width:1100px;margin:0 auto;
+    display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:2.5rem 2rem;
+    align-items:start;
+  }
+  .footer-brand { display:flex;flex-direction:column;gap:.65rem; }
+  .footer-logo { font-size:1.2rem;font-weight:800;color:var(--text);letter-spacing:-.04em; }
   .footer-logo span { color:var(--purple-lt);font-style:italic; }
-  .footer-links { display:flex;gap:1.5rem;list-style:none; }
-  .footer-links a { font-size:.85rem;color:var(--muted);text-decoration:none;transition:color .2s; }
-  .footer-links a:hover { color:var(--text); }
+  .footer-tagline { font-size:.82rem;color:var(--muted);line-height:1.6;max-width:240px; }
+  .footer-col-title {
+    font-size:.7rem;font-weight:700;color:var(--purple-lt);
+    letter-spacing:.1em;text-transform:uppercase;margin-bottom:.85rem;
+  }
+  .footer-links { display:flex;flex-direction:column;gap:.55rem;list-style:none; }
+  .footer-links a {
+    font-size:.86rem;color:var(--muted);text-decoration:none;
+    transition:color .2s,transform .2s;display:inline-block;
+  }
+  .footer-links a:hover { color:var(--text);transform:translateX(3px); }
+  .footer-bottom {
+    max-width:1100px;margin:2rem auto 0;padding-top:1.5rem;
+    border-top:.5px solid var(--border);
+    display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;
+  }
   .footer-copy { font-size:.78rem;color:var(--muted); }
+  .footer-social { display:flex;gap:.75rem; }
+  .footer-social a {
+    width:36px;height:36px;border-radius:10px;
+    border:.5px solid var(--border);display:flex;align-items:center;justify-content:center;
+    color:var(--muted);text-decoration:none;font-size:.85rem;
+    transition:color .2s,border-color .2s,background .2s,transform .2s;
+  }
+  .footer-social a:hover {
+    color:var(--text);border-color:var(--border-p);
+    background:rgba(124,58,237,.1);transform:translateY(-2px);
+  }
 
   /* ══════ RESPONSIVE ══════ */
   @media(max-width:1024px) {
-    .metrics-row { grid-template-columns:1fr 1fr; }
-    .why-bottom { grid-template-columns:1fr; }
+    .services-compact { grid-template-columns:repeat(2,1fr); }
+    .process-rail { grid-template-columns:repeat(2,1fr); gap:1.5rem; padding-top:0; }
+    .process-rail-track { display:none; }
+    .impact-item { min-width:120px; }
+    .cta-split { grid-template-columns:1fr; text-align:center; }
+    .cta-copy { text-align:center; }
+    .cta-copy .section-tag { justify-content:center; }
+    .cta-sub { margin-left:auto;margin-right:auto; }
+    .cta-trust-list { align-items:center; }
+    .footer-inner { grid-template-columns:1fr 1fr; }
+    .footer-brand { grid-column:1/-1; }
   }
   @media(max-width:900px) {
-    .hero-inner { grid-template-columns:1fr; text-align:center; }
+    .hero-inner { grid-template-columns:1fr; text-align:center; gap:2.5rem; }
+    .hero-sub { margin-left:auto;margin-right:auto; }
     .hero-btns  { justify-content:center; }
+    .hero-logo-wrap, #logoCanvas { width:min(320px,85vw)!important;height:min(320px,85vw)!important; }
     .sphere-wrap { display:none; }
-    .process-step { grid-template-columns:48px 1fr; }
-    .process-center-line { left:24px; }
-    .step-left,.step-empty { display:none; }
   }
   @media(max-width:768px) {
     .nav-links { display:none; }
@@ -532,11 +737,23 @@ const css = `
       padding:5rem 2rem 2rem;gap:1.5rem;
       border-bottom:.5px solid var(--border);z-index:99;
     }
-    .services-grid { grid-template-columns:1fr; }
-    .metrics-row { grid-template-columns:1fr 1fr; }
-    .footer-inner { flex-direction:column;text-align:center; }
-    .footer-links { justify-content:center; }
+    .services-compact { grid-template-columns:1fr; }
+    .process-rail { grid-template-columns:1fr; }
+    .impact-strip { flex-direction:column; }
+    .impact-item { border-right:none;border-bottom:.5px solid var(--border); }
+    .impact-item:last-child { border-bottom:none; }
+    .footer-inner { grid-template-columns:1fr; text-align:center; }
+    .footer-brand { align-items:center; }
+    .footer-tagline { max-width:none; }
+    .footer-col-title { margin-bottom:.5rem; }
+    .footer-links { align-items:center; }
+    .footer-bottom { flex-direction:column;text-align:center; }
     .flow-outputs-row { flex-direction:column; }
+    .hero { padding-top:6.5rem; min-height:auto; padding-bottom:3rem; }
+  }
+  @media(max-width:480px) {
+    .hero-h1 { font-size:2rem; }
+    .cta-panel-inner { padding:1.75rem 1.25rem; }
   }
 `
 
@@ -544,12 +761,12 @@ const css = `
    DATA
 ═══════════════════════════════════════ */
 const SERVICES = [
-  { Icon: Zap, cls: 'icon-p', title: 'Flujos N8N', desc: 'Automatiza procesos completos sin código. Conecta CRMs, bases de datos, correos y herramientas en un solo flujo inteligente.' },
-  { Icon: Mic, cls: 'icon-c', title: 'Retell AI — Voz', desc: 'Agentes de voz que atienden, califican y cierran clientes 24/7. Integración directa con tu CRM y agenda.' },
-  { Icon: BarChart3, cls: 'icon-p', title: 'BI & Analytics', desc: 'Dashboards en tiempo real que convierten tus datos en decisiones. Métricas claras, visualización poderosa.' },
-  { Icon: Link2, cls: 'icon-c', title: 'Integraciones API', desc: 'Conectamos cualquier herramienta: HubSpot, Notion, WhatsApp, Google Sheets, Slack y muchas más.' },
-  { Icon: Bot, cls: 'icon-p', title: 'Agentes IA', desc: 'Agentes inteligentes que procesan datos, responden preguntas y ejecutan tareas complejas de forma autónoma.' },
-  { Icon: Code2, cls: 'icon-c', title: 'React + Vite Apps', desc: 'Interfaces web rápidas y modernas para tus herramientas internas o productos digitales de cara al cliente.' },
+  { Icon: Zap, cls: 'icon-p', preview: 'flow', title: 'Flujos N8N', desc: 'Automatiza procesos completos sin código. Conecta CRMs, bases de datos, correos y herramientas en un solo flujo inteligente.' },
+  { Icon: Mic, cls: 'icon-c', preview: 'wave', title: 'Retell AI — Voz', desc: 'Agentes de voz que atienden, califican y cierran clientes 24/7. Integración directa con tu CRM y agenda.' },
+  { Icon: BarChart3, cls: 'icon-p', preview: 'chart', title: 'BI & Analytics', desc: 'Dashboards en tiempo real que convierten tus datos en decisiones. Métricas claras, visualización poderosa.' },
+  { Icon: Link2, cls: 'icon-c', preview: 'nodes', title: 'Integraciones API', desc: 'Conectamos cualquier herramienta: HubSpot, Notion, WhatsApp, Google Sheets, Slack y muchas más.' },
+  { Icon: Bot, cls: 'icon-p', preview: 'grid', title: 'Agentes IA', desc: 'Agentes inteligentes que procesan datos, responden preguntas y ejecutan tareas complejas de forma autónoma.' },
+  { Icon: Code2, cls: 'icon-c', preview: 'window', title: 'React + Vite Apps', desc: 'Interfaces web rápidas y modernas para tus herramientas internas o productos digitales de cara al cliente.' },
 ]
 
 const STEPS = [
@@ -741,6 +958,19 @@ function NavSphere() {
   )
 }
 
+/** Mini UI preview per service type */
+function ServicePreview({ type }) {
+  const inner = {
+    flow: <div className="svc-preview svc-preview--flow"><span /><span /><span /></div>,
+    wave: <div className="svc-preview svc-preview--wave"><i /><i /><i /><i /><i /></div>,
+    chart: <div className="svc-preview svc-preview--chart"><i /><i /><i /><i /></div>,
+    nodes: <div className="svc-preview svc-preview--nodes"><em /><em /><em /></div>,
+    grid: <div className="svc-preview svc-preview--grid"><em /><em /><em /><em /><em /><em /></div>,
+    window: <div className="svc-preview svc-preview--window" />,
+  }
+  return <div className="svc-compact-visual">{inner[type] || inner.flow}</div>
+}
+
 /** Animated 13×13 dot sphere — hero visual */
 function DotSphere() {
   const gridRef = useRef(null)
@@ -786,7 +1016,7 @@ function DotSphere() {
 ═══════════════════════════════════════ */
 function useReveal() {
   useEffect(() => {
-    const els = document.querySelectorAll('.reveal,.reveal-left,.reveal-right')
+    const els = document.querySelectorAll('.reveal,.reveal-left,.reveal-right,.reveal-scale')
     const io = new IntersectionObserver(
       entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible') }),
       { threshold: 0.1 }
@@ -796,17 +1026,48 @@ function useReveal() {
   }, [])
 }
 
-function useDrawLine(ref) {
+function useRailFill(ref) {
   useEffect(() => {
     if (!ref.current) return
-    const parent = ref.current.parentElement
+    const parent = ref.current.closest('.process-rail') || ref.current.parentElement
     const io = new IntersectionObserver(
       ([entry]) => { if (entry.isIntersecting) ref.current.classList.add('drawn') },
-      { threshold: 0.05 }
+      { threshold: 0.2 }
     )
     io.observe(parent)
     return () => io.disconnect()
   }, [ref])
+}
+
+function useCardStagger(selector) {
+  useEffect(() => {
+    const cards = document.querySelectorAll(selector)
+    if (!cards.length) return
+
+    const io = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return
+          io.unobserve(entry.target)
+          const siblings = Array.from(cards)
+          const idx = siblings.indexOf(entry.target)
+          animate(entry.target, {
+            opacity: [0, 1],
+            translateY: [20, 0],
+            delay: idx * 70,
+            duration: 650,
+            ease: 'outExpo',
+          })
+        })
+      },
+      { threshold: 0.12 }
+    )
+    cards.forEach(c => {
+      c.style.opacity = '0'
+      io.observe(c)
+    })
+    return () => io.disconnect()
+  }, [selector])
 }
 
 function useCounter(target, duration = 1600) {
@@ -839,10 +1100,30 @@ function useCounter(target, duration = 1600) {
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
-  const lineRef = useRef(null)
+  const railRef = useRef(null)
+  const [activeStep, setActiveStep] = useState(0)
 
   useReveal()
-  useDrawLine(lineRef)
+  useRailFill(railRef)
+  useCardStagger('.svc-compact')
+  
+  useEffect(() => {
+    const cols = document.querySelectorAll('.process-col')
+    if (!cols.length) return
+    const io = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const idx = Number(entry.target.dataset.step)
+            setActiveStep(idx)
+          }
+        })
+      },
+      { threshold: 0.5 }
+    )
+    cols.forEach(el => io.observe(el))
+    return () => io.disconnect()
+  }, [])
 
   /* Nav scroll */
   useEffect(() => {
@@ -935,50 +1216,51 @@ export default function LandingPage() {
             </h2>
             <p className="section-sub">Desde flujos simples hasta arquitecturas complejas de IA. La herramienta correcta para cada problema.</p>
           </div>
-          <div className="services-grid">
-            {SERVICES.map(({ Icon, cls, title, desc }, i) => (
-              <div key={i} className="service-card reveal" style={{ transitionDelay: `${i * .07}s` }}>
-                <div className={`svc-icon ${cls}`}><Icon size={19} /></div>
-                <div className="svc-title">{title}</div>
-                <div className="svc-desc">{desc}</div>
-              </div>
+                    <div className="services-compact">
+            {SERVICES.map(({ Icon, cls, preview, title, desc }) => (
+              <article key={title} className="svc-compact">
+                <ServicePreview type={preview} />
+                <div className="svc-compact-body">
+                  <div className="svc-compact-head">
+                    <div className={`svc-compact-icon ${cls}`}><Icon size={15} /></div>
+                    <h3 className="svc-compact-title">{title}</h3>
+                  </div>
+                  <p className="svc-compact-desc">{desc}</p>
+                </div>
+              </article>
             ))}
           </div>
         </div>
       </section>
 
+      <div className="section-divider" aria-hidden="true" />
+
       {/* ══ PROCESS ══ */}
-      <section id="proceso" className="section">
+      <section id="proceso" className="section process-section">
         <div className="section-inner">
-          <div className="section-header reveal" style={{ textAlign: 'center' }}>
-            <div className="section-tag" style={{ justifyContent: 'center' }}><Cpu size={12} /> Proceso</div>
+          <div className="section-header section-header--center reveal">
+            <div className="section-tag"><Cpu size={12} /> Proceso</div>
             <h2 className="section-title">De la idea a la <span className="g-text">automatización</span> en 4 pasos</h2>
-            <p className="section-sub" style={{ margin: '0 auto' }}>Un método iterativo, claro y sin sorpresas. Sabemos exactamente qué funciona.</p>
+            <p className="section-sub">Un método iterativo, claro y sin sorpresas. Sabemos exactamente qué funciona.</p>
           </div>
-          <div className="process-wrap">
-            <div className="process-center-line" ref={lineRef} />
-            {STEPS.map(({ n, Icon, side, title, desc, chip }, i) => (
-              <div key={i} className="process-step">
-                <div className={`step-left ${side === 'left' ? 'reveal-left' : ''}`} style={{ transitionDelay: `${i * .12}s` }}>
-                  {side === 'left' && (
-                    <div className="step-card" style={{ display: 'inline-block', width: '100%', textAlign: 'left' }}>
-                      <div className="step-card-title"><Icon size={15} style={{ color: 'var(--purple-lt)', flexShrink: 0 }} />{title}</div>
-                      <div className="step-card-desc">{desc}</div>
-                      <span className="step-chip">{chip}</span>
-                    </div>
-                  )}
-                </div>
-                <div className="step-circle-wrap">
-                  <div className={`step-circle${i === 0 ? ' active' : ''}`}>{n}</div>
-                </div>
-                <div className={`step-right ${side === 'right' ? 'reveal-right' : ''}`} style={{ transitionDelay: `${i * .12}s` }}>
-                  {side === 'right' && (
-                    <div className="step-card">
-                      <div className="step-card-title"><Icon size={15} style={{ color: 'var(--cyan)', flexShrink: 0 }} />{title}</div>
-                      <div className="step-card-desc">{desc}</div>
-                      <span className="step-chip">{chip}</span>
-                    </div>
-                  )}
+          <div className="process-rail reveal">
+            <div className="process-rail-track">
+              <div className="process-rail-fill" ref={railRef} />
+            </div>
+            {STEPS.map(({ n, Icon, title, desc, chip }, i) => (
+              <div
+                key={n}
+                className={`process-col${activeStep === i ? ' is-active' : ''}`}
+                data-step={i}
+              >
+                <div className="process-marker">{n}</div>
+                <div className="process-glass">
+                  <div className="process-glass-head">
+                    <Icon size={15} style={{ color: i % 2 === 0 ? 'var(--cyan)' : 'var(--purple-lt)' }} />
+                    <span className="process-glass-title">{title}</span>
+                  </div>
+                  <p className="process-glass-desc">{desc}</p>
+                  <span className="process-chip">{chip}</span>
                 </div>
               </div>
             ))}
@@ -1072,38 +1354,13 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* METRICS ROW — below the flow */}
-            <div className="metrics-row">
-              {METRICS.map(({ Icon, color, num, label }, i) => (
-                <div key={i} className="metric-card reveal" style={{ transitionDelay: `${i * .07}s` }}>
-                  <div className="metric-icon icon-p"><Icon size={16} style={{ color }} /></div>
-                  <div className="metric-num" style={{ color }}>{num}</div>
-                  <div className="metric-label">{label}</div>
+            <div className="impact-strip reveal">
+              {METRICS.map(({ num, label, color }) => (
+                <div key={label} className="impact-item">
+                  <div className="impact-num" style={{ color }}>{num}</div>
+                  <div className="impact-label">{label}</div>
                 </div>
               ))}
-            </div>
-
-            {/* Features + Tech stack */}
-            <div className="why-bottom">
-              <div className="feat-card reveal">
-                {WHY_FEATURES.map(({ Icon, title, desc }) => (
-                  <div key={title} className="feat-item">
-                    <div className="feat-icon2"><Icon size={14} /></div>
-                    <div>
-                      <div className="feat-title2">{title}</div>
-                      <div className="feat-desc2">{desc}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="tech-card reveal" style={{ transitionDelay: '.08s' }}>
-                <div className="section-tag" style={{ fontSize: '.7rem' }}><Cpu size={11} /> Stack tecnológico</div>
-                <div className="tech-chips">
-                  {TECHS.map((t, i) => (
-                    <span key={t} className={`tech-chip${i % 4 === 0 ? ' hl' : ''}`}>{t}</span>
-                  ))}
-                </div>
-              </div>
             </div>
 
           </div>
@@ -1112,26 +1369,35 @@ export default function LandingPage() {
 
       {/* ══ CTA ══ */}
       <section id="contacto" className="cta-section">
-        <div className="cta-inner reveal">
-          <div className="cta-card">
-            <div className="cta-orb-1" />
-            <div className="cta-orb-2" />
-            <div className="section-tag" style={{ justifyContent: 'center', marginBottom: '.75rem' }}>
-              <Rocket size={12} /> Empieza hoy
-            </div>
+        <div className="cta-mesh" aria-hidden="true" />
+        <div className="cta-split reveal">
+          <div className="cta-copy">
+            <div className="section-tag"><Rocket size={12} /> Empieza hoy</div>
             <h2 className="cta-title">
-              ¿Listo para <span className="g-text">automatizar</span><br />tu negocio?
+              ¿Listo para <span className="g-text">automatizar</span> tu negocio?
             </h2>
             <p className="cta-sub">
               Agenda una llamada de 30 minutos sin compromiso — te decimos exactamente qué podemos automatizar y cuánto tiempo te ahorraría.
             </p>
-            <div className="cta-btns">
-              <a href="mailto:hola@tekkly.com" className="btn-primary" id="cta-email-btn">
-                Agenda tu demo gratis <ArrowRight size={15} />
-              </a>
-              <a href="https://linkedin.com/company/tekklycom" target="_blank" rel="noreferrer" className="btn-ghost" id="cta-linkedin-btn">
-                LinkedIn ↗
-              </a>
+            <div className="cta-trust-list">
+              <span className="cta-trust-item"><CheckCircle2 size={15} /> Sin compromiso</span>
+              <span className="cta-trust-item"><CheckCircle2 size={15} /> Demo de 30 min</span>
+              <span className="cta-trust-item"><CheckCircle2 size={15} /> Respuesta en 24 h</span>
+            </div>
+          </div>
+          <div className="cta-panel">
+            <div className="cta-panel-inner">
+              <div className="cta-panel-label">Siguiente paso</div>
+              <p className="cta-panel-title">Cuéntanos tu proceso y te mostramos el flujo en vivo.</p>
+              <div className="cta-btns">
+                <a href="mailto:hola@tekkly.com" className="btn-primary" id="cta-email-btn">
+                  Agenda tu demo gratis <ArrowRight size={15} />
+                </a>
+                <a href="https://linkedin.com/company/tekklycom" target="_blank" rel="noreferrer" className="btn-ghost" id="cta-linkedin-btn">
+                  LinkedIn ↗
+                </a>
+              </div>
+              <p className="cta-panel-note">Sin tarjeta · Sin spam · Solo valor</p>
             </div>
           </div>
         </div>
@@ -1140,14 +1406,33 @@ export default function LandingPage() {
       {/* ══ FOOTER ══ */}
       <footer className="footer">
         <div className="footer-inner">
-          <div className="footer-logo"><span>TEK</span>KLY</div>
-          <ul className="footer-links">
-            <li><a href="#servicios">Servicios</a></li>
-            <li><a href="#proceso">Proceso</a></li>
-            <li><a href="#por-que">Por qué nosotros</a></li>
-            <li><a href="#contacto">Contacto</a></li>
-          </ul>
+          <div className="footer-brand">
+            <div className="footer-logo"><span>TEK</span>KLY</div>
+            <p className="footer-tagline">Automatización con IA para empresas que quieren escalar sin fricción.</p>
+          </div>
+          <div>
+            <div className="footer-col-title">Navegación</div>
+            <ul className="footer-links">
+              <li><a href="#servicios">Servicios</a></li>
+              <li><a href="#proceso">Proceso</a></li>
+              <li><a href="#por-que">Por qué nosotros</a></li>
+              <li><a href="#contacto">Contacto</a></li>
+            </ul>
+          </div>
+          <div>
+            <div className="footer-col-title">Contacto</div>
+            <ul className="footer-links">
+              <li><a href="mailto:hola@tekkly.com">hola@tekkly.com</a></li>
+              <li><a href="https://linkedin.com/company/tekklycom" target="_blank" rel="noreferrer">LinkedIn</a></li>
+            </ul>
+          </div>
+        </div>
+        <div className="footer-bottom">
           <div className="footer-copy">© 2026 Tekkly · Automatización con IA</div>
+          <div className="footer-social">
+            <a href="https://linkedin.com/company/tekklycom" target="_blank" rel="noreferrer" aria-label="LinkedIn">in</a>
+            <a href="mailto:hola@tekkly.com" aria-label="Email">@</a>
+          </div>
         </div>
       </footer>
     </>
