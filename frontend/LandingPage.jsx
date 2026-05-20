@@ -5,7 +5,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { createTimeline, stagger, animate } from 'animejs'
 import {
-  Zap, Mic, BarChart3, Link2, Bot, Code2,
+  Zap, Mic, BarChart3, Link2, Bot,
   Target, Clock, ShieldCheck, TrendingUp,
   Search, PenTool, Rocket, Activity,
   Database, Mail, MessageSquare, GitBranch,
@@ -13,6 +13,13 @@ import {
   ChevronRight,
 } from 'lucide-react'
 import LogoParticle from './src/components/LogoParticle';
+
+function safeJsonLd(obj) {
+  return JSON.stringify(obj)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026')
+}
 
 /* ═══════════════════════════════════════
    GLOBAL CSS
@@ -291,9 +298,11 @@ const css = `
 
   /* ══════ SERVICES — compact + UI preview ══════ */
   .services-compact {
-    display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;
+    display:flex;flex-wrap:wrap;justify-content:center;gap:.75rem;
+    max-width:1200px;margin-inline:auto;
   }
   .svc-compact {
+    flex:1 1 280px;max-width:calc((100% - 1.5rem) / 3);
     border-radius:14px;overflow:hidden;
     border:.5px solid var(--border);
     background:var(--card);
@@ -404,6 +413,7 @@ const css = `
   .process-rail {
     display:grid;grid-template-columns:repeat(4,1fr);
     gap:1.25rem;position:relative;padding-top:3.5rem;
+    list-style:none;margin:0;padding-left:0;
   }
   .process-rail-track {
     position:absolute;top:1.35rem;left:12.5%;right:12.5%;height:2px;
@@ -629,41 +639,6 @@ const css = `
     padding-top:.5rem;border-top:.5px solid var(--border);
   }
 
-  #creature-wrapper {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: fixed;
-    top: 0;
-    left: 0;
-    overflow: hidden;
-    width: 100vw;
-    height: 100vh;
-    pointer-events: none;
-    z-index: 9999;
-  }
-  #creature {
-    font-size: .2vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 150em;
-    height: 150em;
-    flex-wrap: wrap;
-  }
-  #creature div {
-    transform-style: preserve-3d;
-    position: relative;
-    width: 4em;
-    height: 4em;
-    margin: 3em;
-    border-radius: 2em;
-    will-change: transform;
-    mix-blend-mode: plus-lighter;
-    /*mix-blend-mode: screen;*/
-    /*mix-blend-mode: lighten;*/
-    background: #A78BFA;
-  }
   /* ══════ FOOTER ══════ */
   .footer {
     padding:3rem clamp(1.25rem,4vw,2.5rem) 2.25rem;
@@ -709,7 +684,8 @@ const css = `
 
   /* ══════ RESPONSIVE ══════ */
   @media(max-width:1024px) {
-    .services-compact { grid-template-columns:repeat(2,1fr); }
+    .services-compact { max-width:640px; }
+    .svc-compact { max-width:calc((100% - .75rem) / 2); }
     .process-rail { grid-template-columns:repeat(2,1fr); gap:1.5rem; padding-top:0; }
     .process-rail-track { display:none; }
     .impact-item { min-width:120px; }
@@ -737,7 +713,7 @@ const css = `
       padding:5rem 2rem 2rem;gap:1.5rem;
       border-bottom:.5px solid var(--border);z-index:99;
     }
-    .services-compact { grid-template-columns:1fr; }
+    .svc-compact { flex:1 1 100%;max-width:100%; }
     .process-rail { grid-template-columns:1fr; }
     .impact-strip { flex-direction:column; }
     .impact-item { border-right:none;border-bottom:.5px solid var(--border); }
@@ -761,12 +737,11 @@ const css = `
    DATA
 ═══════════════════════════════════════ */
 const SERVICES = [
-  { Icon: Zap, cls: 'icon-p', preview: 'flow', title: 'Flujos N8N', desc: 'Automatiza procesos completos sin código. Conecta CRMs, bases de datos, correos y herramientas en un solo flujo inteligente.' },
+  { Icon: Zap, cls: 'icon-p', preview: 'flow', title: 'N8n', desc: 'Automatiza procesos completos sin código. Conecta CRMs, bases de datos, correos y herramientas en un solo flujo inteligente.' },
   { Icon: Mic, cls: 'icon-c', preview: 'wave', title: 'Retell AI — Voz', desc: 'Agentes de voz que atienden, califican y cierran clientes 24/7. Integración directa con tu CRM y agenda.' },
   { Icon: BarChart3, cls: 'icon-p', preview: 'chart', title: 'BI & Analytics', desc: 'Dashboards en tiempo real que convierten tus datos en decisiones. Métricas claras, visualización poderosa.' },
   { Icon: Link2, cls: 'icon-c', preview: 'nodes', title: 'Integraciones API', desc: 'Conectamos cualquier herramienta: HubSpot, Notion, WhatsApp, Google Sheets, Slack y muchas más.' },
   { Icon: Bot, cls: 'icon-p', preview: 'grid', title: 'Agentes IA', desc: 'Agentes inteligentes que procesan datos, responden preguntas y ejecutan tareas complejas de forma autónoma.' },
-  { Icon: Code2, cls: 'icon-c', preview: 'window', title: 'React + Vite Apps', desc: 'Interfaces web rápidas y modernas para tus herramientas internas o productos digitales de cara al cliente.' },
 ]
 
 const STEPS = [
@@ -799,138 +774,6 @@ const FLOW_OUTPUTS = [
   { Icon: Activity, label: 'Slack', color: 'var(--cyan)' },
 ]
 
-function CreatureEffect() {
-  useEffect(() => {
-    let active = true;
-    let mainLoop, autoMove, manualMovementTimeout;
-
-    const followPointer = e => {
-      const event = e.type === 'touchmove' ? e.touches[0] : e;
-      const viewport = { w: window.innerWidth * .5, h: window.innerHeight * .5 };
-      if (window.creatureCursor) {
-        window.creatureCursor.x = event.pageX - viewport.w;
-        window.creatureCursor.y = event.pageY - viewport.h;
-      }
-      if (autoMove) autoMove.pause();
-      if (manualMovementTimeout) manualMovementTimeout.restart();
-    };
-
-    import('https://esm.sh/animejs').then(anime => {
-      if (!active) return;
-      const { animate, createTimeline, createTimer, stagger, utils } = anime;
-
-      const creatureEl = document.querySelector('#creature');
-      if (!creatureEl || creatureEl.children.length > 0) return;
-
-      const viewport = { w: window.innerWidth * .5, h: window.innerHeight * .5 };
-      const cursor = { x: 0, y: 0 };
-      window.creatureCursor = cursor;
-      const rows = 13;
-      const grid = [rows, rows];
-      const from = 'center';
-      const scaleStagger = stagger([2, 5], { ease: 'inQuad', grid, from });
-      const opacityStagger = stagger([1, .1], { grid, from });
-
-      for (let i = 0; i < (rows * rows); i++) {
-        creatureEl.appendChild(document.createElement('div'));
-      }
-
-      const particuleEls = creatureEl.querySelectorAll('div');
-
-      utils.set(creatureEl, {
-        width: rows * 10 + 'em',
-        height: rows * 10 + 'em'
-      });
-
-      utils.set(particuleEls, {
-        x: 0,
-        y: 0,
-        scale: scaleStagger,
-        opacity: opacityStagger,
-        background: stagger([80, 20], {
-          grid, from,
-          modifier: v => `hsl(261, 80%, ${v}%)`,
-        }),
-        boxShadow: stagger([8, 1], {
-          grid, from,
-          modifier: v => `0px 0px ${utils.round(v, 0)}em 0px var(--purple-lt)`,
-        }),
-        zIndex: stagger([rows * rows, 1], { grid, from, modifier: utils.round(0) }),
-      });
-
-      const pulse = () => {
-        animate(particuleEls, {
-          keyframes: [
-            {
-              scale: 5,
-              opacity: 1,
-              delay: stagger(90, { start: 1650, grid, from }),
-              duration: 150,
-            }, {
-              scale: scaleStagger,
-              opacity: opacityStagger,
-              ease: 'inOutQuad',
-              duration: 600
-            }
-          ],
-        });
-      }
-
-      mainLoop = createTimer({
-        frameRate: 15, // Animate to the new cursor position every 250ms
-        onUpdate: () => {
-          animate(particuleEls, {
-            x: cursor.x,
-            y: cursor.y,
-            delay: stagger(40, { grid, from }),
-            duration: stagger(120, { start: 750, ease: 'inQuad', grid, from }),
-            ease: 'inOut',
-            composition: 'blend', // This allows the animations to overlap nicely
-          });
-        }
-      });
-
-      autoMove = createTimeline()
-        .add(cursor, {
-          x: [-viewport.w * .45, viewport.w * .45],
-          modifier: x => x + Math.sin(mainLoop.currentTime * .0007) * viewport.w * .5,
-          duration: 3000,
-          ease: 'inOutExpo',
-          alternate: true,
-          loop: true,
-          onBegin: pulse,
-          onLoop: pulse,
-        }, 0)
-        .add(cursor, {
-          y: [-viewport.h * .45, viewport.h * .45],
-          modifier: y => y + Math.cos(mainLoop.currentTime * .00012) * viewport.h * .5,
-          duration: 1000,
-          ease: 'inOutQuad',
-          alternate: true,
-          loop: true,
-        }, 0);
-
-      manualMovementTimeout = createTimer({
-        duration: 1500,
-        onComplete: () => autoMove.play(),
-      });
-
-      document.addEventListener('mousemove', followPointer);
-      document.addEventListener('touchmove', followPointer);
-    }).catch(err => console.error("Error loading animejs:", err));
-
-    return () => {
-      active = false;
-      document.removeEventListener('mousemove', followPointer);
-      document.removeEventListener('touchmove', followPointer);
-      if (mainLoop) mainLoop.pause();
-      if (autoMove) autoMove.pause();
-      if (manualMovementTimeout) manualMovementTimeout.pause();
-    };
-  }, []);
-
-  return null;
-}
 /* ═══════════════════════════════════════
    SUB-COMPONENTS
 ═══════════════════════════════════════ */
@@ -1003,9 +846,6 @@ function DotSphere() {
       <div className="sphere-label">
         <span className="badge-dot" style={{ width: 5, height: 5 }} />
         Motor de automatización activo
-      </div>
-      <div id="creature-wrapper">
-        <div id="creature"></div>
       </div>
     </div>
   )
@@ -1146,39 +986,157 @@ export default function LandingPage() {
     <>
       <style>{css}</style>
 
-      <CreatureEffect />
-      <div id="creature-wrapper">
-        <div id="creature"></div>
-      </div>
+      {/* ══ SEO: JSON-LD structured data ══ */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd({
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://tekkly.com/#organization",
+            "name": "Tekkly",
+            "url": "https://tekkly.com",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://tekkly.com/src/images/tekkly.png",
+              "width": 512,
+              "height": 512
+            },
+            "email": "tekklycom@gmail.com",
+            "telephone": "+593998000699",
+            "description": "Automatización con IA para empresas: flujos N8n, agentes de voz Retell AI, integraciones API y dashboards BI.",
+            "sameAs": ["https://linkedin.com/company/tekklycom"],
+            "contactPoint": {
+              "@type": "ContactPoint",
+              "telephone": "+593998000699",
+              "email": "tekklycom@gmail.com",
+              "contactType": "customer support",
+              "availableLanguage": ["Spanish"],
+              "areaServed": "ES"
+            },
+            "knowsAbout": ["Automatización con IA","N8n","Retell AI","Agentes de voz IA","Integraciones API","Business Intelligence","Dashboards BI"]
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://tekkly.com/#website",
+            "url": "https://tekkly.com",
+            "name": "Tekkly",
+            "publisher": { "@id": "https://tekkly.com/#organization" },
+            "inLanguage": "es-ES",
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://tekkly.com/#contacto",
+              "query-input": "required name=search_term_string"
+            }
+          },
+          {
+            "@type": "WebPage",
+            "@id": "https://tekkly.com/#webpage",
+            "url": "https://tekkly.com",
+            "name": "Tekkly — Automatización con IA, N8n y Agentes de Voz para Empresas",
+            "description": "Diseñamos e implementamos flujos de automatización con IA: N8n, Retell AI, agentes autónomos e integraciones API. Primer flujo en producción en 7 días.",
+            "isPartOf": { "@id": "https://tekkly.com/#website" },
+            "about": { "@id": "https://tekkly.com/#organization" },
+            "inLanguage": "es-ES",
+            "dateModified": "2026-05-20"
+          },
+          {
+            "@type": "Service",
+            "name": "Automatización de procesos con N8n",
+            "provider": { "@id": "https://tekkly.com/#organization" },
+            "description": "Diseño e implementación de flujos de automatización empresarial con N8n: conexión de CRMs, bases de datos, correos y herramientas sin código.",
+            "areaServed": "ES",
+            "serviceType": "Automatización empresarial"
+          },
+          {
+            "@type": "Service",
+            "name": "Agentes de Voz IA con Retell AI",
+            "provider": { "@id": "https://tekkly.com/#organization" },
+            "description": "Agentes de voz inteligentes que atienden, califican y cierran clientes 24/7 integrados directamente con tu CRM y agenda.",
+            "areaServed": "ES",
+            "serviceType": "Agentes conversacionales de voz"
+          },
+          {
+            "@type": "Service",
+            "name": "Integraciones API y BI & Analytics",
+            "provider": { "@id": "https://tekkly.com/#organization" },
+            "description": "Conectamos cualquier herramienta vía API y creamos dashboards de Business Intelligence en tiempo real para convertir tus datos en decisiones.",
+            "areaServed": "ES",
+            "serviceType": "Integración de sistemas y analítica de negocio"
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "¿Cuánto tiempo tarda el primer flujo en producción?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "El primer flujo de automatización entra en producción en un máximo de 7 días desde el inicio del proyecto."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "¿Necesito saber programar para usar los flujos de N8n?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "No. Conectamos y configuramos todos los flujos sin que tu equipo necesite escribir código. Solo defines el proceso y nosotros lo automatizamos."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "¿Qué herramientas pueden integrarse?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Integramos HubSpot, Notion, WhatsApp, Google Sheets, Slack, PostgreSQL, Supabase, OpenAI, Anthropic y muchas más a través de N8n y APIs personalizadas."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "¿Cuál es el ROI promedio de las automatizaciones?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "El ROI promedio documentado en los primeros 90 días es de ×3.8, con más de 150 horas ahorradas por cliente al mes."
+                }
+              }
+            ]
+          }
+        ]
+      })}} />
 
       {/* ══ NAV ══ */}
-      <nav className={`nav${scrolled ? ' scrolled' : ''}`}>
-        <a href="#" className="nav-logo-wrap">
-          <NavSphere />
+      <nav className={`nav${scrolled ? ' scrolled' : ''}`} aria-label="Navegación principal">
+        <a href="#" className="nav-logo-wrap" aria-label="Tekkly — Inicio" title="Tekkly">
+          <NavSphere aria-hidden="true" />
           <div className="nav-logo-text"><span>TEK</span>KLY</div>
         </a>
-        <ul className={`nav-links${menuOpen ? ' open' : ''}`}>
+        <ul className={`nav-links${menuOpen ? ' open' : ''}`} role="list">
           <li><a href="#servicios" onClick={() => setMenuOpen(false)}>Servicios</a></li>
           <li><a href="#proceso" onClick={() => setMenuOpen(false)}>Proceso</a></li>
           <li><a href="#por-que" onClick={() => setMenuOpen(false)}>Por qué nosotros</a></li>
           <li><a href="#contacto" onClick={() => setMenuOpen(false)}>Contacto</a></li>
         </ul>
-        <a href="#contacto" className="nav-cta" id="nav-cta-btn">
-          Agenda demo <ChevronRight size={14} />
+        <a href="#contacto" className="nav-cta" id="nav-cta-btn" aria-label="Agenda una demo con Tekkly">
+          Agenda demo <ChevronRight size={14} aria-hidden="true" />
         </a>
-        <button className="nav-mobile-btn" onClick={() => setMenuOpen(o => !o)}>☰</button>
+        <button
+          className="nav-mobile-btn"
+          onClick={() => setMenuOpen(o => !o)}
+          aria-expanded={menuOpen}
+          aria-controls="nav-menu"
+          aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'}
+        >☰</button>
       </nav>
 
+      <main id="main-content">
 
       {/* ══ HERO ══ */}
-      <section className="hero">
-        <div className="hero-orb orb-1" />
-        <div className="hero-orb orb-2" />
-        <div className="hero-grid" />
+      <section className="hero" aria-label="Presentación de Tekkly">
+        <div className="hero-orb orb-1" aria-hidden="true" />
+        <div className="hero-orb orb-2" aria-hidden="true" />
+        <div className="hero-grid" aria-hidden="true" />
         <div className="hero-inner">
-          {/* Left — text */}
           <div>
-            <div className="hero-badge">
+            <div className="hero-badge" aria-hidden="true">
               <span className="badge-dot" />
               Automatización con IA para empresas
             </div>
@@ -1187,42 +1145,40 @@ export default function LandingPage() {
               con <span className="g-text">IA que realmente<br />trabaja</span>
             </h1>
             <p className="hero-sub">
-              Conectamos tus procesos con N8N, Retell AI y flujos inteligentes.
+              Conectamos tus procesos con N8n, Retell AI y flujos inteligentes.
               Sin código, sin complicaciones — resultados medibles desde la primera semana.
             </p>
             <div className="hero-btns">
-              <a href="#contacto" className="btn-primary" id="hero-cta-primary">
-                Agenda una demo <ArrowRight size={15} />
+              <a href="#contacto" className="btn-primary" id="hero-cta-primary" aria-label="Agenda una demo gratuita con Tekkly">
+                Agenda una demo <ArrowRight size={15} aria-hidden="true" />
               </a>
-              <a href="#servicios" className="btn-ghost" id="hero-cta-secondary">
-                Ver servicios <ChevronRight size={14} />
+              <a href="#servicios" className="btn-ghost" id="hero-cta-secondary" aria-label="Ver servicios de automatización con IA">
+                Ver servicios <ChevronRight size={14} aria-hidden="true" />
               </a>
             </div>
           </div>
-
-          {/* Right — animated particle logo */}
-          <LogoParticle />
+          <LogoParticle aria-hidden="true" />
         </div>
       </section>
 
       {/* ══ SERVICES ══ */}
-      <section id="servicios" className="section services-bg">
+      <section id="servicios" className="section services-bg" aria-labelledby="servicios-title">
         <div className="section-inner">
           <div className="section-header reveal">
-            <div className="section-tag"><Zap size={12} /> Servicios</div>
-            <h2 className="section-title">
+            <div className="section-tag" aria-hidden="true"><Zap size={12} /> Servicios</div>
+            <h2 id="servicios-title" className="section-title">
               Todo lo que necesitas<br />
               para <span className="g-text">automatizar</span>
             </h2>
             <p className="section-sub">Desde flujos simples hasta arquitecturas complejas de IA. La herramienta correcta para cada problema.</p>
           </div>
-                    <div className="services-compact">
+          <div className="services-compact" role="list">
             {SERVICES.map(({ Icon, cls, preview, title, desc }) => (
-              <article key={title} className="svc-compact">
-                <ServicePreview type={preview} />
+              <article key={title} className="svc-compact" role="listitem">
+                <ServicePreview type={preview} aria-hidden="true" />
                 <div className="svc-compact-body">
                   <div className="svc-compact-head">
-                    <div className={`svc-compact-icon ${cls}`}><Icon size={15} /></div>
+                    <div className={`svc-compact-icon ${cls}`} aria-hidden="true"><Icon size={15} /></div>
                     <h3 className="svc-compact-title">{title}</h3>
                   </div>
                   <p className="svc-compact-desc">{desc}</p>
@@ -1236,87 +1192,75 @@ export default function LandingPage() {
       <div className="section-divider" aria-hidden="true" />
 
       {/* ══ PROCESS ══ */}
-      <section id="proceso" className="section process-section">
+      <section id="proceso" className="section process-section" aria-labelledby="proceso-title">
         <div className="section-inner">
           <div className="section-header section-header--center reveal">
-            <div className="section-tag"><Cpu size={12} /> Proceso</div>
-            <h2 className="section-title">De la idea a la <span className="g-text">automatización</span> en 4 pasos</h2>
+            <div className="section-tag" aria-hidden="true"><Cpu size={12} /> Proceso</div>
+            <h2 id="proceso-title" className="section-title">De la idea a la <span className="g-text">automatización</span> en 4 pasos</h2>
             <p className="section-sub">Un método iterativo, claro y sin sorpresas. Sabemos exactamente qué funciona.</p>
           </div>
-          <div className="process-rail reveal">
-            <div className="process-rail-track">
+          <ol className="process-rail reveal" aria-label="Pasos del proceso de automatización">
+            <div className="process-rail-track" aria-hidden="true">
               <div className="process-rail-fill" ref={railRef} />
             </div>
             {STEPS.map(({ n, Icon, title, desc, chip }, i) => (
-              <div
+              <li
                 key={n}
                 className={`process-col${activeStep === i ? ' is-active' : ''}`}
                 data-step={i}
               >
-                <div className="process-marker">{n}</div>
+                <div className="process-marker" aria-hidden="true">{n}</div>
                 <div className="process-glass">
                   <div className="process-glass-head">
-                    <Icon size={15} style={{ color: i % 2 === 0 ? 'var(--cyan)' : 'var(--purple-lt)' }} />
+                    <Icon size={15} style={{ color: i % 2 === 0 ? 'var(--cyan)' : 'var(--purple-lt)' }} aria-hidden="true" />
                     <span className="process-glass-title">{title}</span>
                   </div>
                   <p className="process-glass-desc">{desc}</p>
                   <span className="process-chip">{chip}</span>
                 </div>
-              </div>
+              </li>
             ))}
-          </div>
+          </ol>
         </div>
       </section>
 
-      {/* ══ WHY TEKKLY — big flow enganche ══ */}
-      <section id="por-que" className="section services-bg">
+      {/* ══ WHY TEKKLY ══ */}
+      <section id="por-que" className="section services-bg" aria-labelledby="porque-title">
         <div className="section-inner">
           <div className="section-header reveal" style={{ textAlign: 'center' }}>
-            <div className="section-tag" style={{ justifyContent: 'center' }}><CheckCircle2 size={12} /> Por qué Tekkly</div>
-            <h2 className="section-title">Mira tu negocio<br /><span className="g-text">automatizado en vivo</span></h2>
+            <div className="section-tag" style={{ justifyContent: 'center' }} aria-hidden="true"><CheckCircle2 size={12} /> Por qué Tekkly</div>
+            <h2 id="porque-title" className="section-title">Mira tu negocio<br /><span className="g-text">automatizado en vivo</span></h2>
             <p className="section-sub" style={{ margin: '0 auto 3rem' }}>
               Esto es lo que construimos para ti — flujos que trabajan mientras tú duermes.
             </p>
           </div>
 
           <div className="why-layout">
+            <div className="flow-showcase reveal" aria-label="Diagrama del motor de automatización Tekkly">
+              <div className="flow-showcase-orb" aria-hidden="true" />
+              <div className="flow-scan" aria-hidden="true" />
 
-            {/* BIG FLOW VISUAL — enganche principal */}
-            <div className="flow-showcase reveal">
-              <div className="flow-showcase-orb" />
-              <div className="flow-scan" />
-
-              <div className="flow-showcase-title">
+              <div className="flow-showcase-title" aria-hidden="true">
                 <GitBranch size={18} style={{ color: 'var(--purple-lt)' }} />
                 Automatización en vivo — Tekkly Engine
                 <span className="live-badge"><span className="live-dot" />Activo</span>
               </div>
 
-              <div className="flow-diagram-big">
-
-                {/* Source */}
+              <div className="flow-diagram-big" aria-hidden="true">
                 <div className="flow-node-big fnode-source">
                   <Webhook size={16} /> Webhook / CRM trigger
                 </div>
-
-                {/* Line down */}
                 <div className="flow-vline" style={{ height: 44 }}>
                   <div className="flow-vdot" />
                   <div className="flow-vdot d2" />
                 </div>
-
-                {/* N8N Engine */}
                 <div className="flow-node-big fnode-engine">
-                  <GitBranch size={18} /> N8N Engine — Tekkly
+                  <GitBranch size={18} /> N8n Engine — Tekkly
                 </div>
-
-                {/* Line down */}
                 <div className="flow-vline" style={{ height: 44 }}>
                   <div className="flow-vdot" />
                   <div className="flow-vdot d2" />
                 </div>
-
-                {/* 4 outputs */}
                 <div className="flow-outputs-row">
                   {FLOW_OUTPUTS.map(({ Icon, label, color }, i) => (
                     <div key={label} className="flow-branch-wrap">
@@ -1329,8 +1273,6 @@ export default function LandingPage() {
                     </div>
                   ))}
                 </div>
-
-                {/* Live stats inside flow card */}
                 <div style={{
                   display: 'grid', gridTemplateColumns: 'repeat(4,1fr)',
                   gap: '.75rem', marginTop: '2.5rem', width: '100%'
@@ -1354,46 +1296,45 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <div className="impact-strip reveal">
+            <div className="impact-strip reveal" role="list" aria-label="Métricas de impacto">
               {METRICS.map(({ num, label, color }) => (
-                <div key={label} className="impact-item">
+                <div key={label} className="impact-item" role="listitem">
                   <div className="impact-num" style={{ color }}>{num}</div>
                   <div className="impact-label">{label}</div>
                 </div>
               ))}
             </div>
-
           </div>
         </div>
       </section>
 
       {/* ══ CTA ══ */}
-      <section id="contacto" className="cta-section">
+      <section id="contacto" className="cta-section" aria-labelledby="contacto-title">
         <div className="cta-mesh" aria-hidden="true" />
         <div className="cta-split reveal">
           <div className="cta-copy">
-            <div className="section-tag"><Rocket size={12} /> Empieza hoy</div>
-            <h2 className="cta-title">
+            <div className="section-tag" aria-hidden="true"><Rocket size={12} /> Empieza hoy</div>
+            <h2 id="contacto-title" className="cta-title">
               ¿Listo para <span className="g-text">automatizar</span> tu negocio?
             </h2>
             <p className="cta-sub">
               Agenda una llamada de 30 minutos sin compromiso — te decimos exactamente qué podemos automatizar y cuánto tiempo te ahorraría.
             </p>
-            <div className="cta-trust-list">
-              <span className="cta-trust-item"><CheckCircle2 size={15} /> Sin compromiso</span>
-              <span className="cta-trust-item"><CheckCircle2 size={15} /> Demo de 30 min</span>
-              <span className="cta-trust-item"><CheckCircle2 size={15} /> Respuesta en 24 h</span>
-            </div>
+            <ul className="cta-trust-list" role="list">
+              <li className="cta-trust-item"><CheckCircle2 size={15} aria-hidden="true" /> Sin compromiso</li>
+              <li className="cta-trust-item"><CheckCircle2 size={15} aria-hidden="true" /> Demo de 30 min</li>
+              <li className="cta-trust-item"><CheckCircle2 size={15} aria-hidden="true" /> Respuesta en 24 h</li>
+            </ul>
           </div>
           <div className="cta-panel">
             <div className="cta-panel-inner">
               <div className="cta-panel-label">Siguiente paso</div>
               <p className="cta-panel-title">Cuéntanos tu proceso y te mostramos el flujo en vivo.</p>
               <div className="cta-btns">
-                <a href="mailto:hola@tekkly.com" className="btn-primary" id="cta-email-btn">
-                  Agenda tu demo gratis <ArrowRight size={15} />
+                <a href="mailto:tekklycom@gmail.com" className="btn-primary" id="cta-email-btn" aria-label="Enviar email para agendar demo gratuita">
+                  Agenda tu demo gratis <ArrowRight size={15} aria-hidden="true" />
                 </a>
-                <a href="https://linkedin.com/company/tekklycom" target="_blank" rel="noreferrer" className="btn-ghost" id="cta-linkedin-btn">
+                <a href="https://linkedin.com/company/tekklycom" target="_blank" rel="noreferrer noopener" className="btn-ghost" id="cta-linkedin-btn" aria-label="Visitar Tekkly en LinkedIn (abre en nueva pestaña)">
                   LinkedIn ↗
                 </a>
               </div>
@@ -1403,14 +1344,16 @@ export default function LandingPage() {
         </div>
       </section>
 
+      </main>
+
       {/* ══ FOOTER ══ */}
-      <footer className="footer">
+      <footer className="footer" role="contentinfo" aria-label="Pie de página de Tekkly">
         <div className="footer-inner">
           <div className="footer-brand">
             <div className="footer-logo"><span>TEK</span>KLY</div>
             <p className="footer-tagline">Automatización con IA para empresas que quieren escalar sin fricción.</p>
           </div>
-          <div>
+          <nav aria-label="Mapa del sitio">
             <div className="footer-col-title">Navegación</div>
             <ul className="footer-links">
               <li><a href="#servicios">Servicios</a></li>
@@ -1418,20 +1361,29 @@ export default function LandingPage() {
               <li><a href="#por-que">Por qué nosotros</a></li>
               <li><a href="#contacto">Contacto</a></li>
             </ul>
-          </div>
-          <div>
+          </nav>
+          <address style={{ fontStyle: 'normal' }}>
             <div className="footer-col-title">Contacto</div>
             <ul className="footer-links">
-              <li><a href="mailto:hola@tekkly.com">hola@tekkly.com</a></li>
-              <li><a href="https://linkedin.com/company/tekklycom" target="_blank" rel="noreferrer">LinkedIn</a></li>
+              <li><a href="mailto:tekklycom@gmail.com" aria-label="Enviar email a Tekkly">tekklycom@gmail.com</a></li>
+              <li><a href="tel:+593998000699" aria-label="Llamar a Tekkly">+593 998 000 699</a></li>
+              <li><a href="https://linkedin.com/company/tekklycom" target="_blank" rel="noreferrer noopener" aria-label="Tekkly en LinkedIn (abre en nueva pestaña)">LinkedIn</a></li>
             </ul>
-          </div>
+          </address>
         </div>
         <div className="footer-bottom">
-          <div className="footer-copy">© 2026 Tekkly · Automatización con IA</div>
+          <div className="footer-copy">
+            © 2026 Tekkly · Automatización con IA ·{' '}
+            <a href="#privacidad" style={{ color: 'var(--muted)', textDecoration: 'none' }}
+               onMouseEnter={e => e.target.style.color = 'var(--text)'}
+               onMouseLeave={e => e.target.style.color = 'var(--muted)'}
+               aria-label="Política de Privacidad de Tekkly">
+              Política de Privacidad
+            </a>
+          </div>
           <div className="footer-social">
-            <a href="https://linkedin.com/company/tekklycom" target="_blank" rel="noreferrer" aria-label="LinkedIn">in</a>
-            <a href="mailto:hola@tekkly.com" aria-label="Email">@</a>
+            <a href="https://linkedin.com/company/tekklycom" target="_blank" rel="noreferrer noopener" aria-label="Perfil de Tekkly en LinkedIn">in</a>
+            <a href="mailto:tekklycom@gmail.com" aria-label="Contactar a Tekkly por email">@</a>
           </div>
         </div>
       </footer>

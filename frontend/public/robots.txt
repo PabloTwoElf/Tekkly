@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Bloquear rutas de desarrollo o assets sin valor SEO
+Disallow: /src/
+Disallow: /.vite/
+
+Sitemap: https://tekkly.com/sitemap.xml
